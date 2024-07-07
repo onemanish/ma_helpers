@@ -151,9 +151,9 @@ def quote_maker():
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-def main():
+def get_quote():
     st.set_page_config(layout='wide', page_title='Quote file')
     quote_maker()
 
 if __name__ == "__main__":
-    main()
+    get_quote()
