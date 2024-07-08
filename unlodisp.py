@@ -33,50 +33,56 @@ def get_unlocodes(): # split the coords col to Lat Long and convert to decimal
     return df
 
 # print('------ start --------')
-# Set page parameters
-st.set_page_config(layout='wide', page_title='UN/LOCODES')
-st.sidebar.subheader('Own location')
-vLat = st.sidebar.number_input('My Latitude (use -ve decimal for S)', min_value=-90.0, max_value=90.0, value=19.0)
-vLong = st.sidebar.number_input('My Longitude (use -ve decimal for W)', min_value=-180.0, max_value=180.0, value=72.5)
-vCircle = st.sidebar.number_input('Draw Circle Around Me (NM)', value=20)
-st.sidebar.divider()
-diff = st.sidebar.number_input('Show UN/LO Codes around (º)', value=1.0)
-mapZoom = st.sidebar.number_input('Map zoom', value=9)
-st.sidebar.write('---')
-st.subheader('UN/LOCode Viewer')
+def showCodes():
+    # Set page parameters
+    # st.set_page_config(layout='wide', page_title='UN/LOCODES')
+    col1, col2, col3 = st.columns(3)
+    # st.subheader('Own location')
+    vLat = col1.number_input('My Latitude (use -ve decimal for S)', min_value=-90.0, max_value=90.0, value=19.0)
+    vLong = col1.number_input('My Longitude (use -ve decimal for W)', min_value=-180.0, max_value=180.0, value=72.5)
+    vCircle = col2.number_input('Draw Circle Around Me (NM)', value=20)
+    # st.sidebar.divider()
+    diff = col3.number_input('Show UN/LO Codes around (º)', value=1.0)
+    mapZoom = col3.number_input('Map zoom', value=9)
+    # st.sidebar.write('---')
+    # st.subheader('UN/LOCode Viewer')
 
-df1 = get_unlocodes()
-sel_df = df1[(df1['Lat'] >= vLat - diff) & (df1['Lat'] <= vLat + diff)] # remove all points diff deg far from my location
-sel_df = sel_df[(sel_df['Long'] >= vLong - diff) & (sel_df['Long'] <= vLong + diff)] # remove all points diff º far from my location
+    df1 = get_unlocodes()
+    sel_df = df1[(df1['Lat'] >= vLat - diff) & (df1['Lat'] <= vLat + diff)] # remove all points diff deg far from my location
+    sel_df = sel_df[(sel_df['Long'] >= vLong - diff) & (sel_df['Long'] <= vLong + diff)] # remove all points diff º far from my location
 
-def get_dist(row):
-    return haversine((row['Lat'], row['Long']), (vLat, vLong), unit=Unit.NAUTICAL_MILES)
-    
-sel_df['Distance'] = sel_df.apply(get_dist, axis=1) # Add column for distances 
-sel_df = sel_df.sort_values(by='Distance')
-sel_df.reset_index(drop=True, inplace=True) # to be able to address each point sequentially
-st.error(f'{len(sel_df)} UN/LO Code locations found within {diff}º from my position ({vLat}º, {vLong}º).')
-# st.write(sel_df)
-styled_df = sel_df.style.apply(lambda x: ["background-color: darkred" if val == "Y" else "" for val in x], axis=1)
-styled_df = styled_df.format("{:.2f}", subset=pd.IndexSlice[:, ["Lat", 'Long','Distance']])
-st.dataframe(styled_df)
+    def get_dist(row):
+        return haversine((row['Lat'], row['Long']), (vLat, vLong), unit=Unit.NAUTICAL_MILES)
+        
+    sel_df['Distance'] = sel_df.apply(get_dist, axis=1) # Add column for distances 
+    sel_df = sel_df.sort_values(by='Distance')
+    sel_df.reset_index(drop=True, inplace=True) # to be able to address each point sequentially
+    st.error(f'{len(sel_df)} UN/LO Code locations found within {diff}º from my position ({vLat}º, {vLong}º).')
+    # st.write(sel_df)
+    styled_df = sel_df.style.apply(lambda x: ["background-color: darkred" if val == "Y" else "" for val in x], axis=1)
+    styled_df = styled_df.format("{:.2f}", subset=pd.IndexSlice[:, ["Lat", 'Long','Distance']])
+    st.dataframe(styled_df)
 
- # set up map and add markers
-m = folium.Map(location=[vLat, vLong], tiles="OpenStreetMap", zoom_start=mapZoom)
-folium.Marker(location=[vLat, vLong], tooltip=folium.Tooltip('I am here!'), icon=folium.Icon(color='orange')).add_to(m)
-folium.Circle(location=[vLat, vLong], radius=vCircle*1852, color="black", weight=1, \
-    opacity=1, fill_opacity=0.2, fill_color="green", fill=False, tooltip=f"{vCircle}NM").add_to(m)
+    # set up map and add markers
+    # m = folium.Map(location=[vLat, vLong], tiles="OpenStreetMap", zoom_start=mapZoom)
+    # folium.Marker(location=[vLat, vLong], tooltip=folium.Tooltip('I am here!'), icon=folium.Icon(color='orange')).add_to(m)
+    # folium.Circle(location=[vLat, vLong], radius=vCircle*1852, color="black", weight=1, \
+    #     opacity=1, fill_opacity=0.2, fill_color="green", fill=False, tooltip=f"{vCircle}NM").add_to(m)
 
-for i in range(0,len(sel_df)):
-    Distance = haversine((vLat,vLong), (sel_df.iloc[i]['Lat'], sel_df.iloc[i]['Long']), unit=Unit.NAUTICAL_MILES)
-    folium.Marker(location=[sel_df.iloc[i]['Lat'], sel_df.iloc[i]['Long']],
-      tooltip=f"{sel_df.iloc[i]['Name']} - {sel_df.iloc[i]['UNLOCode']} - {sel_df.iloc[i]['Distance']:0.1f}NM away",
-      icon=folium.Icon(color='red' if sel_df.iloc[i]['InDNV'] == 'Y' else 'darkgreen'),
-   ).add_to(m)
+    # for i in range(0,len(sel_df)):
+    #     Distance = haversine((vLat,vLong), (sel_df.iloc[i]['Lat'], sel_df.iloc[i]['Long']), unit=Unit.NAUTICAL_MILES)
+    #     folium.Marker(location=[sel_df.iloc[i]['Lat'], sel_df.iloc[i]['Long']],
+    #       tooltip=f"{sel_df.iloc[i]['Name']} - {sel_df.iloc[i]['UNLOCode']} - {sel_df.iloc[i]['Distance']:0.1f}NM away",
+    #       icon=folium.Icon(color='red' if sel_df.iloc[i]['InDNV'] == 'Y' else 'darkgreen'),
+    #    ).add_to(m)
 
-st_data = st_folium(m, use_container_width=True)
-selData = st_data['last_object_clicked_tooltip']
-# st.warning(selData)
-if selData != None:
-    selData = "  --  ".join(st_data['last_object_clicked_tooltip'].split('-'))
-    st.sidebar.error(f"{selData}")
+    # st_data = st_folium(m, use_container_width=True)
+    # selData = st_data['last_object_clicked_tooltip']
+    # # st.warning(selData)
+    # if selData != None:
+    #     selData = "  --  ".join(st_data['last_object_clicked_tooltip'].split('-'))
+    #     # st.sidebar.error(f"{selData}")
+
+
+if __name__ == '__main__':
+    showCodes()

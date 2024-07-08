@@ -7,7 +7,7 @@ st.set_page_config(
 )
 
 st.sidebar.header('MA Helpers')
-selOpt = st.sidebar.radio('Choose Helper', ['Quote Maker', 'UN/LO Code display', 'BiVar Report'])
+selOpt = st.sidebar.radio('Choose Helper', ['Quote Maker', 'UN/LO Code display', 'BiVar Report'], label_visibility='collapsed')
 
 match selOpt:
     case 'Quote Maker':
@@ -15,5 +15,6 @@ match selOpt:
         mq.quote_maker()
     case 'UN/LO Code display':
         import unlodisp
+        unlodisp.showCodes()
 
 
